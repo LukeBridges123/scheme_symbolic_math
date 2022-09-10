@@ -1,5 +1,4 @@
 #lang scheme
-;predicates, constructors, and selectors for symbolic expressions to be differentiated.
 (require "mathematical-expressions.rkt")
 
 
