@@ -52,15 +52,15 @@
     (if (= n 0) result
         (fact-iter (- n 1) (* result n))))
   (fact-iter n 1))
-(define (taylor-series f var a num-of-terms)
-  (define (taylor-series-iter f degree-of-curr-term partial-taylor-series n-factorial)
+(define (taylor-series f var center num-of-terms)
+  (define (taylor-series-iter nth-deriv degree-of-curr-term partial-taylor-series n-factorial)
     (if (= num-of-terms degree-of-curr-term) partial-taylor-series
-        (let* ((coeff (make-quotient (evaluate-expr f var a)
+        (let* ((coeff (make-quotient (evaluate-expr nth-deriv var center)
                                      n-factorial))
                (curr-term (make-product coeff
-                                        (make-exponentiation (make-difference var a)
+                                        (make-exponentiation (make-difference var center)
                                                                    degree-of-curr-term))))
-          (taylor-series-iter (deriv f var)
+          (taylor-series-iter (deriv nth-deriv var)
                               (+ degree-of-curr-term 1)
                               (make-sum partial-taylor-series curr-term)
                               (* n-factorial (+ degree-of-curr-term 1))))))
@@ -85,3 +85,4 @@
 (deriv '(2 ^ x) 'x)
 (make-product '(x ^ 2) '(x ^ 3))
 |#
+

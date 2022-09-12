@@ -19,13 +19,16 @@ numerical values to the variables within an expression, and another function exp
   (and (variable? var1) (variable? var2) (eq? var1 var2)))
 (define (=number? expr num)
   (and (number? expr) (= expr num)))
-
-
+#|
+"sum" = list of the form (expr1 + expr2), where expr1, expr2 are expressions. "addend" is the first expression, "augend" is the last.
+Currently-implemented simplification rules: x + 0 = x; 0 + x = x; x + x = 0; x + y = (+ x y) when x and y are numbers; x + x = 2x
+|#
 (define (make-sum expr1 expr2)
   (cond
     ((=number? expr1 0) expr2)
     ((=number? expr2 0) expr1)
     ((and (number? expr1) (number? expr2)) (+ expr1 expr2))
+    ((equal? expr1 expr2) (make-product 2 expr1))
     (else (list expr1 '+ expr2))))
 
 (define (addend sum)
@@ -36,9 +39,8 @@ numerical values to the variables within an expression, and another function exp
   (and (pair? expr) (eq? (cadr expr) '+)))
 
 #|
-A "difference" is an expression represented as a list of the form (expr1 - expr2) where expr1, expr2 are mathematical expressions. "minuend" is the first expression
-and "subtrahend" is the last. Currently, make-difference can automatically simplify expressions where at least one of the following is true:
-the subtrahend is 0; the minuend is 0; the subtrahend and minuend are equal; the subtrahend and minuend are both numbers. 
+"difference" = list of the form (expr1 - expr2), where expr1, expr2 are expressions. "minuend" is the first expression, "subtrahend" is the last.
+Currently-implemented simplification rules: x - 0 = x; 0 - x = -x; x - x = 0; x - y = (- x y) when x and y are numbers.
 |# 
 (define (make-difference expr1 expr2)
   (cond
@@ -54,15 +56,20 @@ the subtrahend is 0; the minuend is 0; the subtrahend and minuend are equal; the
 (define (difference? expr)
   (and (pair? expr) (eq? (cadr expr) '-)))
 
+#|
+"product" = list of the form (expr1 * expr2), where expr1, expr2 are expressions. "multiplier" is the first expression, "multiplicand" is the last.
+Currently-implemented simplification rules: x * 0 = 0 * x = 0; 1 * x = x * 1 = x; x * x = x^2; x * y = (* x y) when x and y are numbers; (x^a) * (x^b) = x^(a+b)
+|#
 (define (make-product expr1 expr2)
   (cond
     ((or (=number? expr1 0) (=number? expr2 0)) 0)
     ((=number? expr1 1) expr2)
     ((=number? expr2 1) expr1)
+    ((and (number? expr1) (number? expr2)) (* expr1 expr2))
+    ((equal? expr1 expr2) (make-exponentiation expr1 2))
     ((and (exponentiation? expr1) (exponentiation? expr2) (equal? (base expr1) (base expr2)))
      (make-exponentiation (base expr1)
                           (make-sum (power expr1) (power expr2))))
-    ((and (number? expr1) (number? expr2)) (* expr1 expr2))
     (else (list expr1 '* expr2))))
 (define (multiplier prod)
   (car prod))
@@ -70,22 +77,32 @@ the subtrahend is 0; the minuend is 0; the subtrahend and minuend are equal; the
   (caddr prod))
 (define (product? expr)
   (and (pair? expr) (eq? (cadr expr) '*)))
-
-(define (make-quotient numer denom)
+#|
+"quotient" = list of the form (expr1 / expr2) where expr1 and expr2 are expressions. "numer" and "demon" are the first and second expressions, respectively.
+Currently-implemented simplification rules: 0 / x = 0; x / 1 = x; x / y = (/ x y) when x, y are numbers; x / x = 1; (x^a)/(x^b) = x^(a-b)
+|#
+(define (make-quotient expr1 expr2)
   (cond
-    ((=number? numer 0) 0)
-    ((=number? denom 1) numer)
-    ((=number? denom 0) (error "division by 0: MAKE-QUOTIENT" numer denom))
-    ((and (number? numer) (number? denom)) (/ numer denom))
-    ((eq? numer denom) 1)
-    (else (list numer '/ denom))))
+    ((=number? expr2 0) (error "division by 0: MAKE-QUOTIENT" expr1 expr2))
+    ((=number? expr1 0) 0)
+    ((=number? expr2 1) expr1)
+    ((and (number? expr1) (number? expr2)) (/ expr1 expr2))
+    ((eq? expr1 expr2) 1)
+    ((and (exponentiation? expr1) (exponentiation? expr2) (equal? (base expr1) (base expr2)))
+     (make-exponentiation (base expr1)
+                          (make-difference (power expr1) (power expr2))))
+    (else (list expr1 '/ expr2))))
 (define (numer quotient)
   (car quotient))
 (define (denom quotient)
   (caddr quotient))
 (define (quotient? expr)
   (eq? (cadr expr) '/))
-
+#|
+"special function": list of the form (f expr), where f is one of the currently-implemented special functions:
+sin, cos, tan, ln
+and expr is just an expression. No simplification rules have been implemented so far.
+|#
 (define (make-special-function function part-in-parentheses)
   (list function part-in-parentheses))
 (define (special-function? expr)
@@ -123,7 +140,8 @@ the subtrahend is 0; the minuend is 0; the subtrahend and minuend are equal; the
     ((eq? symbol 'sin) sin)
     ((eq? symbol 'cos) cos)
     ((eq? symbol 'tan) tan)
-    ((eq? symbol 'ln) log)))
+    ((eq? symbol 'ln) log)
+    (else (error "unknown operation: SYMBOL-TO-FUNCTION" symbol))))
 
 
 (define (evaluate-expr expr var value-of-var)
@@ -135,7 +153,9 @@ the subtrahend is 0; the minuend is 0; the subtrahend and minuend are equal; the
                                          (evaluate-expr (car expr) var value-of-var)
                                          (evaluate-expr (caddr expr) var value-of-var)))
     ((expr-with-unary-operation? expr) ((symbol-to-function (car expr))
-                                        (evaluate-expr (cadr expr) var value-of-var)))))
+                                        (evaluate-expr (cadr expr) var value-of-var)))
+    (else (error "unknown expression type: EVALUATE-EXPR" expr))))
 (define (expr->function expr var)
   (lambda (x)
     (evaluate-expr expr var x)))
+
