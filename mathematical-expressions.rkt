@@ -21,13 +21,15 @@ numerical values to the variables within an expression, and another function exp
   (and (number? expr) (= expr num)))
 #|
 "sum" = list of the form (expr1 + expr2), where expr1, expr2 are expressions. "addend" is the first expression, "augend" is the last.
-Currently-implemented simplification rules: x + 0 = x; 0 + x = x; x + x = 0; x + y = (+ x y) when x and y are numbers; x + x = 2x
+Currently-implemented simplification rules: x + 0 = x; 0 + x = x; x + x = 0; x + y = (+ x y) when x and y are numbers;
+x + (-y) = x - y (currently implemented for numbers only); x + x = 2x
 |#
 (define (make-sum expr1 expr2)
   (cond
     ((=number? expr1 0) expr2)
     ((=number? expr2 0) expr1)
     ((and (number? expr1) (number? expr2)) (+ expr1 expr2))
+    ((number? expr2) (< 0 expr2) (make-difference expr1 (abs expr2)))
     ((equal? expr1 expr2) (make-product 2 expr1))
     (else (list expr1 '+ expr2))))
 
@@ -110,7 +112,10 @@ and expr is just an expression. No simplification rules have been implemented so
     (or (eq? f 'sin)
         (eq? f 'cos)
         (eq? f 'tan)
-        (eq? f 'ln))))
+        (eq? f 'ln)
+        (eq? f 'arcsin)
+        (eq? f 'arccos)
+        (eq? f 'arctan))))
 
 (define (make-exponentiation expr1 expr2)
   (cond
@@ -118,6 +123,8 @@ and expr is just an expression. No simplification rules have been implemented so
     ((=number? expr2 0) 1)
     ((=number? expr2 1) expr1)
     ((and (number? expr1) (number? expr2)) (expt expr1 expr2))
+    ((exponentiation? expr1) (make-exponentiation (base expr1)
+                                                  (make-product (power expr1) expr2)))
     (else (list expr1 '^ expr2))))
 (define (base exponentiation)
   (car exponentiation))
@@ -141,6 +148,9 @@ and expr is just an expression. No simplification rules have been implemented so
     ((eq? symbol 'cos) cos)
     ((eq? symbol 'tan) tan)
     ((eq? symbol 'ln) log)
+    ((eq? symbol 'arcsin) asin)
+    ((eq? symbol 'arccos) acos)
+    ((eq? symbol 'arctan) atan) 
     (else (error "unknown operation: SYMBOL-TO-FUNCTION" symbol))))
 
 

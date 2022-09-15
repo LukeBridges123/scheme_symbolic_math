@@ -41,17 +41,26 @@
                                                                            (deriv inner-function var)))
                                   ((eq? outer-function 'cos) (make-product (make-product -1 (make-special-function 'sin inner-function))
                                                                            (deriv inner-function var)))
+                                  ((eq? outer-function 'tan) (make-sum 1 (make-exponentiation (make-special-function 'tan var) 2)))
                                   ((eq? outer-function 'ln) (make-quotient (deriv inner-function var)
                                                                            inner-function))
+                                  ((eq? outer-function 'arcsin) (make-product (make-exponentiation (make-difference 1
+                                                                                                                    (make-exponentiation inner-function 2))
+                                                                                                   -1/2)
+                                                                              (deriv inner-function var)))
+                                  ((eq? outer-function 'arccos)
+                                   (make-product (make-product -1 (make-exponentiation (make-difference 1
+                                                                                                        (make-exponentiation inner-function 2))
+                                                                                       -1/2))
+                                                 (deriv inner-function var)))
+                                  ((eq? outer-function 'arctan) (make-product (make-quotient 1 (make-sum (make-exponentiation inner-function 2)
+                                                                                                         1))
+                                                                              (deriv inner-function var)))
+                                                                 
                                   (else (error "unknown expression type: DERIV" expr)))))
     
     (else (error "unknown expression type: DERIV" expr))))
 
-(define (factorial n)
-  (define (fact-iter n result)
-    (if (= n 0) result
-        (fact-iter (- n 1) (* result n))))
-  (fact-iter n 1))
 (define (taylor-series f var center num-of-terms)
   (define (taylor-series-iter nth-deriv degree-of-curr-term partial-taylor-series n-factorial)
     (if (= num-of-terms degree-of-curr-term) partial-taylor-series
