@@ -63,6 +63,9 @@ Currently-implemented simplification rules: x - 0 = x; 0 - x = -x; x - x = 0; x 
 Currently-implemented simplification rules: x * 0 = 0 * x = 0; 1 * x = x * 1 = x; x * x = x^2; x * y = (* x y) when x and y are numbers; (x^a) * (x^b) = x^(a+b)
 When one of the expressions is a number, makes sure that the number goes first in the product, so that it will always produce expressions like (2 * x) rather than
 (x * 2). This makes it easier for things like the integral function to "pull out" constant factors.
+It also makes it easier to implement rules that simplify expressions like (a * (b * x)) and ((a * x) * b), where a and b are numbers, into ((a * b) * x).
+The make-product function can "assume" that, if one of the expressions passed to it is a product, that product will have its numerical factors come first.
+This allows for reducing the number of checks needed in order to determine when the ((a * b) * x) simplification rule should be applied. 
 |#
 (define (make-product expr1 expr2)
   (cond
@@ -70,6 +73,14 @@ When one of the expressions is a number, makes sure that the number goes first i
     ((=number? expr1 1) expr2)
     ((=number? expr2 1) expr1)
     ((and (number? expr1) (number? expr2)) (* expr1 expr2))
+    ((and (number-coeff? expr1) (number-coeff? expr2)) (make-product (* (multiplier expr1) (multiplier expr2))
+                                                                     (make-product (multiplicand expr1)
+                                                                                   (multiplicand expr2))))
+    ((and (number? expr1) (number-coeff? expr2)) (make-product (* expr1 (multiplier expr2))
+                                                               (multiplicand expr2)))
+    ((and (number? expr2) (number-coeff? expr1)) (make-product (* expr2 (multiplier expr1))
+                                                               (multiplicand expr1)))
+                       
     ((number? expr2) (list expr2 '* expr1))
     ((equal? expr1 expr2) (make-exponentiation expr1 2))
     ((and (exponentiation? expr1) (exponentiation? expr2) (equal? (base expr1) (base expr2)))
@@ -82,6 +93,11 @@ When one of the expressions is a number, makes sure that the number goes first i
   (caddr prod))
 (define (product? expr)
   (and (pair? expr) (eq? (cadr expr) '*)))
+#|number-coeff checks whether an expression is a product whose first term is a number. (If the product has been made with the
+make-product constructor, which always puts numbers as the first term in a product, then the case where the second term is a number
+need not be checked.|#
+(define (number-coeff? expr)
+  (and (product? expr) (number? (multiplier expr))))
 #|
 "quotient" = list of the form (expr1 / expr2) where expr1 and expr2 are expressions. "numer" and "demon" are the first and second expressions, respectively.
 Currently-implemented simplification rules: 0 / x = 0; x / 1 = x; x / y = (/ x y) when x, y are numbers; x / x = 1; (x^a)/(x^b) = x^(a-b)
