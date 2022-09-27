@@ -61,6 +61,8 @@ Currently-implemented simplification rules: x - 0 = x; 0 - x = -x; x - x = 0; x 
 #|
 "product" = list of the form (expr1 * expr2), where expr1, expr2 are expressions. "multiplier" is the first expression, "multiplicand" is the last.
 Currently-implemented simplification rules: x * 0 = 0 * x = 0; 1 * x = x * 1 = x; x * x = x^2; x * y = (* x y) when x and y are numbers; (x^a) * (x^b) = x^(a+b)
+When one of the expressions is a number, makes sure that the number goes first in the product, so that it will always produce expressions like (2 * x) rather than
+(x * 2). This makes it easier for things like the integral function to "pull out" constant factors.
 |#
 (define (make-product expr1 expr2)
   (cond
@@ -68,6 +70,7 @@ Currently-implemented simplification rules: x * 0 = 0 * x = 0; 1 * x = x * 1 = x
     ((=number? expr1 1) expr2)
     ((=number? expr2 1) expr1)
     ((and (number? expr1) (number? expr2)) (* expr1 expr2))
+    ((number? expr2) (list expr2 '* expr1))
     ((equal? expr1 expr2) (make-exponentiation expr1 2))
     ((and (exponentiation? expr1) (exponentiation? expr2) (equal? (base expr1) (base expr2)))
      (make-exponentiation (base expr1)
