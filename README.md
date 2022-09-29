@@ -1,5 +1,5 @@
 # scheme_symbolic_math
-The goal here is to build a Scheme program that can do calculus symbolically. The goal here is for it to be able to handle any derivative or integral found in standard undergraduate calculus, although that's probably quite far off. At present, it can handle:
+The goal here is to build a Scheme program that can do calculus symbolically. The ideal is for it to be able to handle any derivative or integral found in standard undergraduate calculus, although that's probably quite far off. At present, it can do:
 
 Derivatives of single-variable functions including algebraic functions, the main trigonometric and inverse trigonometric functions, the exponential and natural log, and any product, composition, etc. of the above. Differentiation of exponentiations with arbitrary bases is implemented, but for logarithms, only natural logs work. Possible "next steps" here include implementing some of the less important trig functions, logs with bases other than e, and perhaps some more obscure things like hyperbolic functions. A more ambitious goal would be implicit differentiation, but that would involve much more algebra than the program is currently able to handle.
 
