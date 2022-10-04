@@ -86,10 +86,18 @@ later.
                               (make-sum partial-taylor-series curr-term)
                               (* n-factorial (+ degree-of-curr-term 1))))))
   (taylor-series-iter f 0 0 1))
+
+(define (gradient f vars)
+  (map (lambda (var) (deriv f var)) vars))
+;(gradient (make-product 'x (make-product 'y 'z)) '(x y z))
+
+
+#|
 (evaluate-expr (taylor-series '(e ^ x) 'x 1 10) 'x 1.0)
 (evaluate-expr (taylor-series '(e ^ x) 'x 0 10) 'x 2.0)
 (taylor-series '(sin x) 'x 0 6)
 (taylor-series '(cos x) 'x 0 6)
+|#
     
      
 #| tests
