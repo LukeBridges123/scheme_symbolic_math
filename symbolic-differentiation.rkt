@@ -1,6 +1,6 @@
-#lang scheme
+#lang racket
 (require "mathematical-expressions.rkt")
-
+(provide (all-defined-out))
 
 (define (deriv expr var)
   (cond
@@ -86,9 +86,25 @@ later.
                               (make-sum partial-taylor-series curr-term)
                               (* n-factorial (+ degree-of-curr-term 1))))))
   (taylor-series-iter f 0 0 1))
-
+#|
+Finds the gradient of a function R^n -> R. It takes in an expression f (meant to be a function of n variables) and a list of variables (x1 x2 ... xn).
+Returns a vector (i.e. list, not one of Scheme's "vector" arrays) where the ith element is the partial derivative of f with respect to xi.
+|#
 (define (gradient f vars)
   (map (lambda (var) (deriv f var)) vars))
+#|
+Finds the derivative of a function R -> R^n. The function should be represented as a vector of functions of the form f = (g1(t), g2(t), ... gn(t)), i.e.
+all single-variable functions depending on the same variable.
+|#
+(define (deriv-parameterized-path f var)
+  (map (lambda (g) (deriv g var)) f))
+#|
+Given a list of variables vars, of the form (x1, x2, .. xn), a function R^n -> R depending on all the vars
+
+(define (tangent-hyperplane f vars point)
+  (let ((partial-derivs (gradient f vars))
+        (evaluated-partials (map evaluate-expr partial-derivs vars)))
+    (make-sum |#
 ;(gradient (make-product 'x (make-product 'y 'z)) '(x y z))
 
 

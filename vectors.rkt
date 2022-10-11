@@ -1,4 +1,4 @@
-#lang scheme
+#lang racket
 #| A bunch of vector operations for vectors in R^N. Vectors are represented as lists of numbers.
 
 |#
